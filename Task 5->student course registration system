@@ -1,0 +1,178 @@
+import java.util.*;
+
+// Class representing a Course
+class Course {
+    String code;
+    String title;
+    String description;
+    int capacity;
+    String schedule;
+    List<String> enrolledStudentIds = new ArrayList<>();
+
+    public Course(String code, String title, String description, int capacity, String schedule) {
+        this.code = code;
+        this.title = title;
+        this.description = description;
+        this.capacity = capacity;
+        this.schedule = schedule;
+    }
+
+    public boolean hasAvailableSlot() {
+        return enrolledStudentIds.size() < capacity;
+    }
+
+    public void enroll(String studentId) {
+        if (!enrolledStudentIds.contains(studentId) && hasAvailableSlot()) {
+            enrolledStudentIds.add(studentId);
+        }
+    }
+
+    public void drop(String studentId) {
+        enrolledStudentIds.remove(studentId);
+    }
+
+    public String getInfo() {
+        return code + " - " + title + "\nDesc: " + description +
+                "\nSchedule: " + schedule +
+                "\nEnrolled: " + enrolledStudentIds.size() + "/" + capacity + "\n";
+    }
+}
+
+// Class representing a Student
+class Student {
+    String id;
+    String name;
+    List<String> registeredCourses = new ArrayList<>();
+
+    public Student(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public void register(String courseCode) {
+        if (!registeredCourses.contains(courseCode)) {
+            registeredCourses.add(courseCode);
+        }
+    }
+
+    public void drop(String courseCode) {
+        registeredCourses.remove(courseCode);
+    }
+
+    public void showCourses() {
+        if (registeredCourses.isEmpty()) {
+            System.out.println("No registered courses.");
+        } else {
+            System.out.println("Registered Courses: " + registeredCourses);
+        }
+    }
+}
+
+// Main system class
+public class CourseSystem {
+    static Map<String, Course> courses = new HashMap<>();
+    static Map<String, Student> students = new HashMap<>();
+    static Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        loadCourses();
+
+        System.out.print("Enter Student ID: ");
+        String studentId = scanner.nextLine();
+
+        Student student = students.getOrDefault(studentId, null);
+        if (student == null) {
+            System.out.print("Enter Name: ");
+            String name = scanner.nextLine();
+            student = new Student(studentId, name);
+            students.put(studentId, student);
+        }
+
+        int option;
+        do {
+            System.out.println("\n=== COURSE SYSTEM MENU ===");
+            System.out.println("1. List Available Courses");
+            System.out.println("2. Register for a Course");
+            System.out.println("3. Drop a Course");
+            System.out.println("4. View My Courses");
+            System.out.println("5. Exit");
+            System.out.print("Select option (1-5): ");
+            option = Integer.parseInt(scanner.nextLine());
+
+            switch (option) {
+                case 1:
+                    listCourses();
+                    break;
+                case 2:
+                    registerCourse(student);
+                    break;
+                case 3:
+                    dropCourse(student);
+                    break;
+                case 4:
+                    student.showCourses();
+                    break;
+                case 5:
+                    System.out.println("Goodbye!");
+                    break;
+                default:
+                    System.out.println("Invalid choice.");
+            }
+
+        } while (option != 5);
+    }
+
+    // Load sample course data
+    static void loadCourses() {
+        courses.put("CS101", new Course("CS101", "Intro to Java", "Basics of Java Programming", 2, "Mon 9AM"));
+        courses.put("MATH201", new Course("MATH201", "Calculus", "Advanced Math Topics", 3, "Tue 10AM"));
+        courses.put("ENG301", new Course("ENG301", "English Literature", "Shakespeare and More", 1, "Wed 1PM"));
+    }
+
+    static void listCourses() {
+        System.out.println("\n--- Available Courses ---");
+        for (Course course : courses.values()) {
+            System.out.println(course.getInfo());
+        }
+    }
+
+    static void registerCourse(Student student) {
+        System.out.print("Enter course code to register: ");
+        String code = scanner.nextLine().toUpperCase();
+        Course course = courses.get(code);
+
+        if (course == null) {
+            System.out.println("Course not found.");
+            return;
+        }
+
+        if (!course.hasAvailableSlot()) {
+            System.out.println("Course is full.");
+            return;
+        }
+
+        if (student.registeredCourses.contains(code)) {
+            System.out.println("You are already registered for this course.");
+            return;
+        }
+
+        course.enroll(student.id);
+        student.register(code);
+        System.out.println("Successfully registered for " + code);
+    }
+
+    static void dropCourse(Student student) {
+        System.out.print("Enter course code to drop: ");
+        String code = scanner.nextLine().toUpperCase();
+
+        if (!student.registeredCourses.contains(code)) {
+            System.out.println("You are not enrolled in this course.");
+            return;
+        }
+
+        Course course = courses.get(code);
+        course.drop(student.id);
+        student.drop(code);
+        System.out.println("Successfully dropped " + code);
+    }
+}
